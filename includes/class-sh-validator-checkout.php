@@ -101,6 +101,16 @@ class SH_Validator_Checkout
         }
 
         if (!empty($data['billing_city'])) {
+            $selected_city = is_numeric($data['billing_city'])
+                ? $this->repository->sh_find_city_by_id($data['billing_city'])
+                : null;
+
+            if (is_array($selected_city) && !empty($selected_city['city_name'])) {
+                $data['billing_city'] = $selected_city['city_name'];
+                $data['billing_postcode'] = $selected_city['postal_code'];
+                return $data;
+            }
+
             $postal_code = $this->repository->sh_find_postal_code_by_city($data['billing_city']);
 
             if (!empty($postal_code)) {
@@ -139,17 +149,17 @@ class SH_Validator_Checkout
         }
 
         if (!empty($data['billing_city'])) {
-            $expected_postal_code = $this->repository->sh_find_postal_code_by_city($data['billing_city']);
+            $posted_postal_code = isset($data['billing_postcode']) ? (string) $data['billing_postcode'] : '';
 
-            if (empty($expected_postal_code)) {
-                $errors->add(
-                    'billing_city_invalid',
-                    __('Izabrani grad nije u važećoj listi.', 'sh-validator-korpe')
-                );
-            } elseif (!isset($data['billing_postcode']) || $expected_postal_code !== $data['billing_postcode']) {
+            if ($posted_postal_code === '') {
                 $errors->add(
                     'billing_postcode_invalid',
                     __('Poštanski broj nije usklađen sa izabranim gradom.', 'sh-validator-korpe')
+                );
+            } elseif (!$this->repository->sh_city_postal_pair_exists($data['billing_city'], $posted_postal_code)) {
+                $errors->add(
+                    'billing_city_invalid',
+                    __('Izabrani grad nije u važećoj listi.', 'sh-validator-korpe')
                 );
             }
         }

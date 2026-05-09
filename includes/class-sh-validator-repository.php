@@ -37,7 +37,11 @@ class SH_Validator_Repository
         $options = array('' => __('Izaberite grad', 'sh-validator-korpe'));
 
         foreach ($cities as $city) {
-            $options[$city['city_name']] = $city['city_name'];
+            $options[(string) $city['id']] = sprintf(
+                '%s - %s',
+                $city['city_name'],
+                $city['postal_code']
+            );
         }
 
         return $options;
@@ -49,7 +53,7 @@ class SH_Validator_Repository
         $map = array();
 
         foreach ($cities as $city) {
-            $map[$city['city_name']] = $city['postal_code'];
+            $map[(string) $city['id']] = $city['postal_code'];
         }
 
         return $map;
@@ -74,8 +78,9 @@ class SH_Validator_Repository
         $table_name = $this->sh_get_table_name();
         $existing_city = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT id FROM {$table_name} WHERE normalized_name = %s AND id != %d LIMIT 1",
+                "SELECT id FROM {$table_name} WHERE normalized_name = %s AND postal_code = %s AND id != %d LIMIT 1",
                 $normalized_name,
+                $postal_code,
                 (int) $city_id
             ),
             ARRAY_A
@@ -153,33 +158,6 @@ class SH_Validator_Repository
         }
 
         $table_name = $this->sh_get_table_name();
-        $existing_id = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT id FROM {$table_name} WHERE normalized_name = %s LIMIT 1",
-                $normalized_name
-            )
-        );
-
-        if ($existing_id) {
-            $updated = $wpdb->update(
-                $table_name,
-                array(
-                    'city_name' => $city_name,
-                    'postal_code' => $postal_code,
-                    'normalized_name' => $normalized_name,
-                ),
-                array('id' => (int) $existing_id),
-                array('%s', '%s', '%s'),
-                array('%d')
-            );
-
-            if ($updated === false) {
-                return new WP_Error('import_update_failed', __('Red nije moguće ažurirati.', 'sh-validator-korpe'));
-            }
-
-            return 'updated';
-        }
-
         $inserted = $wpdb->insert(
             $table_name,
             array(
@@ -202,12 +180,53 @@ class SH_Validator_Repository
         global $wpdb;
 
         $table_name = $this->sh_get_table_name();
+
+        if (is_numeric($city_name)) {
+            return $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT postal_code FROM {$table_name} WHERE id = %d LIMIT 1",
+                    (int) $city_name
+                )
+            );
+        }
+
         $normalized_name = SH_Validator_Installer::sh_normalize_city_name($city_name);
 
         return $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT postal_code FROM {$table_name} WHERE normalized_name = %s LIMIT 1",
                 $normalized_name
+            )
+        );
+    }
+
+    public function sh_find_city_by_id($city_id)
+    {
+        global $wpdb;
+
+        $table_name = $this->sh_get_table_name();
+
+        return $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT id, city_name, postal_code FROM {$table_name} WHERE id = %d LIMIT 1",
+                (int) $city_id
+            ),
+            ARRAY_A
+        );
+    }
+
+    public function sh_city_postal_pair_exists($city_name, $postal_code)
+    {
+        global $wpdb;
+
+        $table_name = $this->sh_get_table_name();
+        $normalized_name = SH_Validator_Installer::sh_normalize_city_name($city_name);
+
+        return (bool) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT id FROM {$table_name} WHERE normalized_name = %s AND postal_code = %s LIMIT 1",
+                $normalized_name,
+                sanitize_text_field($postal_code)
             )
         );
     }

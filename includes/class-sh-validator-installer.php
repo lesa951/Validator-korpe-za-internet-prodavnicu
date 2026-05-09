@@ -8,6 +8,7 @@ class SH_Validator_Installer
 {
     const OPTION_EMAIL_TYPOS = 'sh_validator_email_typos';
     const OPTION_LEGACY_SYNC_DONE = 'sh_validator_legacy_sync_done';
+    const OPTION_BUNDLED_CITIES_IMPORTED = 'sh_validator_bundled_cities_imported';
     const BUNDLED_CITIES_FILE = 'data/gradovi.csv';
 
     public static function sh_install()
@@ -52,11 +53,25 @@ class SH_Validator_Installer
             postal_code varchar(20) NOT NULL,
             normalized_name varchar(191) NOT NULL,
             PRIMARY KEY (id),
-            UNIQUE KEY normalized_name (normalized_name)
+            KEY normalized_name (normalized_name),
+            KEY postal_code (postal_code)
         ) {$charset_collate};";
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($sql);
+        self::sh_drop_legacy_unique_city_index($table_name);
+    }
+
+    private static function sh_drop_legacy_unique_city_index($table_name)
+    {
+        global $wpdb;
+
+        $index = $wpdb->get_row($wpdb->prepare("SHOW INDEX FROM {$table_name} WHERE Key_name = %s", 'normalized_name'), ARRAY_A);
+
+        if (is_array($index) && isset($index['Non_unique']) && (int) $index['Non_unique'] === 0) {
+            $wpdb->query("ALTER TABLE {$table_name} DROP INDEX normalized_name");
+            $wpdb->query("ALTER TABLE {$table_name} ADD INDEX normalized_name (normalized_name)");
+        }
     }
 
     private static function sh_seed_email_typos()
@@ -71,6 +86,13 @@ class SH_Validator_Installer
     private static function sh_seed_cities_if_needed()
     {
         $count = self::sh_get_current_city_count();
+        $bundled_row_count = self::sh_get_bundled_csv_row_count();
+
+        if (!get_option(self::OPTION_BUNDLED_CITIES_IMPORTED) && $bundled_row_count > 0 && $count < $bundled_row_count) {
+            if (self::sh_seed_cities_from_bundled_file()) {
+                return;
+            }
+        }
 
         if ($count > 0) {
             return;
@@ -123,7 +145,27 @@ class SH_Validator_Installer
             return false;
         }
 
-        return ((int) $result['inserted'] + (int) $result['updated']) > 0;
+        $imported_count = (int) $result['inserted'] + (int) $result['updated'];
+
+        if ($imported_count > 0) {
+            update_option(self::OPTION_BUNDLED_CITIES_IMPORTED, 'yes');
+            return true;
+        }
+
+        return false;
+    }
+
+    private static function sh_get_bundled_csv_row_count()
+    {
+        $bundled_file = SH_VALIDATOR_PATH . self::BUNDLED_CITIES_FILE;
+
+        if (!file_exists($bundled_file) || !is_readable($bundled_file)) {
+            return 0;
+        }
+
+        $rows = file($bundled_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+        return is_array($rows) ? count($rows) : 0;
     }
 
     public static function sh_maybe_sync_legacy_cities()

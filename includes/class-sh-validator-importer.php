@@ -118,6 +118,7 @@ class SH_Validator_Importer
         $headers = array();
         $is_first_row = true;
         $delimiter = ',';
+        $headerless_csv = false;
 
         while (($data = fgetcsv($handle, 0, ',')) !== false) {
             if ($is_first_row) {
@@ -129,6 +130,17 @@ class SH_Validator_Importer
                 }
 
                 $headers = $this->sh_normalize_headers($data);
+                $headerless_csv = !$this->sh_headers_contain_city_and_postal_code($headers);
+
+                if ($headerless_csv) {
+                    $headers = array('grad', 'postanski_broj');
+                    $row = $this->sh_map_row_by_headers($headers, $data);
+
+                    if (!empty($row)) {
+                        $rows[] = $row;
+                    }
+                }
+
                 $is_first_row = false;
                 continue;
             }
@@ -360,10 +372,20 @@ class SH_Validator_Importer
     {
         return array_map(
             static function ($header) {
-                return sanitize_key(remove_accents((string) $header));
+                $header = preg_replace('/^\xEF\xBB\xBF/', '', (string) $header);
+
+                return sanitize_key(remove_accents($header));
             },
             $headers
         );
+    }
+
+    private function sh_headers_contain_city_and_postal_code($headers)
+    {
+        $city_keys = array('grad', 'city', 'city_name', 'ime_grada', 'naziv_grada', 'name');
+        $postal_keys = array('postanski_broj', 'postanski_broj_grada', 'postal_code', 'postcode', 'zip', 'zip_code');
+
+        return count(array_intersect($headers, $city_keys)) > 0 && count(array_intersect($headers, $postal_keys)) > 0;
     }
 
     private function sh_detect_csv_delimiter($first_row)
