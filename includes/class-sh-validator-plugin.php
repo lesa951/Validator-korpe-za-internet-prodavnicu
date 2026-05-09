@@ -8,7 +8,6 @@ class SH_Validator_Plugin
 {
     private $repository;
     private $settings;
-    private $importer;
     private $assets;
     private $checkout;
 
@@ -16,7 +15,6 @@ class SH_Validator_Plugin
     {
         $this->repository = new SH_Validator_Repository();
         $this->settings = new SH_Validator_Settings();
-        $this->importer = new SH_Validator_Importer($this->repository);
         $this->assets = new SH_Validator_Assets($this->repository, $this->settings);
         $this->checkout = new SH_Validator_Checkout($this->repository, $this->settings);
     }
@@ -110,34 +108,7 @@ class SH_Validator_Plugin
             $notice = __('Lista čestih email grešaka je sačuvana.', 'sh-validator-korpe');
         }
 
-        if (isset($_POST['sh_import_cities'])) {
-            check_admin_referer('sh_import_cities');
-
-            $import_result = $this->importer->sh_import_from_uploaded_file(
-                isset($_FILES['import_file']) ? $_FILES['import_file'] : array(),
-                !empty($_POST['replace_existing_cities'])
-            );
-
-            if (is_wp_error($import_result)) {
-                $notice = $import_result->get_error_message();
-                $notice_type = 'error';
-            } else {
-                $notice = sprintf(
-                    __('Import završen. Dodato: %1$d, ažurirano: %2$d, preskočeno: %3$d.', 'sh-validator-korpe'),
-                    $import_result['inserted'],
-                    $import_result['updated'],
-                    $import_result['skipped']
-                );
-
-                if (!empty($import_result['errors'])) {
-                    $notice .= ' ' . implode(' ', array_slice($import_result['errors'], 0, 3));
-                    $notice_type = 'warning';
-                }
-            }
-        }
-
         $cities = $this->repository->sh_get_cities();
-        $city_count = $this->repository->sh_get_city_count();
         $email_typos = $this->settings->sh_get_email_typos_for_textarea();
 
         include SH_VALIDATOR_PATH . 'admin/views/settings-page.php';

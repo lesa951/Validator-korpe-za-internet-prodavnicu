@@ -8,7 +8,7 @@ class SH_Validator_Installer
 {
     const OPTION_EMAIL_TYPOS = 'sh_validator_email_typos';
     const OPTION_LEGACY_SYNC_DONE = 'sh_validator_legacy_sync_done';
-    const BUNDLED_CITIES_FILE = 'data/gradovi.xlsx';
+    const BUNDLED_CITIES_FILE = 'data/gradovi.csv';
 
     public static function sh_install()
     {
@@ -117,7 +117,7 @@ class SH_Validator_Installer
 
         $repository = new SH_Validator_Repository();
         $importer = new SH_Validator_Importer($repository);
-        $result = $importer->sh_import_from_file_path($bundled_file, 'xlsx', true);
+        $result = $importer->sh_import_from_file_path($bundled_file, 'csv', true);
 
         if (is_wp_error($result)) {
             return false;

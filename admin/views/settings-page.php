@@ -51,39 +51,6 @@ if (!defined('ABSPATH')) {
             </form>
         </div>
 
-        <div class="sh-validator-card">
-            <h2><?php esc_html_e('Import gradova', 'sh-validator-korpe'); ?></h2>
-            <p><?php esc_html_e('Podržani formati su CSV, JSON, XML i XLSX. Kolone mogu biti npr. grad i postanski_broj ili city i postal_code.', 'sh-validator-korpe'); ?></p>
-            <form method="post" enctype="multipart/form-data">
-                <?php wp_nonce_field('sh_import_cities'); ?>
-                <table class="form-table" role="presentation">
-                    <tr>
-                        <th scope="row"><label for="sh-import-file"><?php esc_html_e('Fajl za import', 'sh-validator-korpe'); ?></label></th>
-                        <td><input id="sh-import-file" type="file" name="import_file" accept=".csv,.json,.xml,.xlsx" required></td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php esc_html_e('Način importa', 'sh-validator-korpe'); ?></th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="replace_existing_cities" value="1">
-                                <?php esc_html_e('Obriši postojeće gradove i zameni ih sadržajem iz fajla', 'sh-validator-korpe'); ?>
-                            </label>
-                        </td>
-                    </tr>
-                </table>
-                <p class="description">
-                    <?php
-                    printf(
-                        esc_html__('Trenutno u bazi ima %d gradova.', 'sh-validator-korpe'),
-                        isset($city_count) ? (int) $city_count : 0
-                    );
-                    ?>
-                </p>
-                <p class="submit">
-                    <button type="submit" name="sh_import_cities" class="button button-primary"><?php esc_html_e('Pokreni import', 'sh-validator-korpe'); ?></button>
-                </p>
-            </form>
-        </div>
     </div>
 
     <div class="sh-validator-card sh-validator-table-card">
