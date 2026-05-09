@@ -31,17 +31,33 @@ class SH_Validator_Assets
             return;
         }
 
+        $script_dependencies = array('jquery');
+        $style_dependencies = array();
+
+        if (wp_script_is('selectWoo', 'registered')) {
+            wp_enqueue_script('selectWoo');
+            $script_dependencies[] = 'selectWoo';
+        } elseif (wp_script_is('select2', 'registered')) {
+            wp_enqueue_script('select2');
+            $script_dependencies[] = 'select2';
+        }
+
+        if (wp_style_is('select2', 'registered')) {
+            wp_enqueue_style('select2');
+            $style_dependencies[] = 'select2';
+        }
+
         wp_enqueue_style(
             'sh-validator-korpe',
             SH_VALIDATOR_URL . 'assets/css/sh-validator-checkout.css',
-            array(),
+            $style_dependencies,
             SH_VALIDATOR_VERSION
         );
 
         wp_enqueue_script(
             'sh-validator-korpe',
             SH_VALIDATOR_URL . 'assets/js/sh-validator-checkout.js',
-            array(),
+            $script_dependencies,
             SH_VALIDATOR_VERSION,
             true
         );

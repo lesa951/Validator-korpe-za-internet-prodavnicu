@@ -10,6 +10,7 @@
     var shInvalidPhoneMessage = shConfig.invalidPhoneMessage || 'Unesite ispravan broj telefona. Primer: +381641234567';
     var shCityPostalMap = shConfig.cityPostalMap || {};
     var shEmailTypos = shConfig.emailTypos || {};
+    var shJquery = window.jQuery || null;
 
     function shFindField(selector) {
         return document.querySelector(selector);
@@ -181,6 +182,34 @@
         postcodeField.value = shCityPostalMap[selectedCity] || '';
     }
 
+    function shInitCitySearch(field) {
+        if (!field || !shJquery || field.dataset.shCheckoutValidatorSearchReady === '1') {
+            return;
+        }
+
+        var $field = shJquery(field);
+        var hasSelectWoo = typeof $field.selectWoo === 'function';
+        var hasSelect2 = typeof $field.select2 === 'function';
+
+        if (!hasSelectWoo && !hasSelect2) {
+            return;
+        }
+
+        field.dataset.shCheckoutValidatorSearchReady = '1';
+
+        if ($field.hasClass('select2-hidden-accessible')) {
+            return;
+        }
+
+        $field[hasSelectWoo ? 'selectWoo' : 'select2']({
+            width: '100%',
+            placeholder: shConfig.chooseCityLabel || 'Izaberite grad',
+            allowClear: true
+        });
+
+        $field.on('change', shSyncPostalCode);
+    }
+
     function shInitPhoneField(field) {
         if (!field || field.dataset.shCheckoutValidatorPhoneReady === '1') {
             return;
@@ -221,6 +250,7 @@
         }
 
         field.dataset.shCheckoutValidatorCityReady = '1';
+        shInitCitySearch(field);
         field.addEventListener('change', shSyncPostalCode);
         shSyncPostalCode();
     }

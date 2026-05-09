@@ -23,8 +23,14 @@ class SH_Validator_Plugin
     {
         add_action('admin_notices', array($this, 'sh_admin_notice_missing_woocommerce'));
         add_action('admin_menu', array($this, 'sh_register_admin_page'));
+        add_action('plugins_loaded', array($this, 'sh_maybe_sync_legacy_data'));
         $this->assets->sh_register();
         $this->checkout->sh_register();
+    }
+
+    public function sh_maybe_sync_legacy_data()
+    {
+        SH_Validator_Installer::sh_maybe_sync_legacy_cities();
     }
 
     public function sh_admin_notice_missing_woocommerce()

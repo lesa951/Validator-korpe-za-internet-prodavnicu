@@ -7,12 +7,14 @@ if (!defined('ABSPATH')) {
 class SH_Validator_Installer
 {
     const OPTION_EMAIL_TYPOS = 'sh_validator_email_typos';
+    const OPTION_LEGACY_SYNC_DONE = 'sh_validator_legacy_sync_done';
 
     public static function sh_install()
     {
         self::sh_create_cities_table();
         self::sh_seed_email_typos();
         self::sh_seed_cities_if_needed();
+        self::sh_mark_legacy_sync_if_possible();
     }
 
     public static function sh_get_default_email_typos()
@@ -70,7 +72,7 @@ class SH_Validator_Installer
         global $wpdb;
 
         $table_name = $wpdb->prefix . 'sh_validator_cities';
-        $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_name}");
+        $count = self::sh_get_current_city_count();
 
         if ($count > 0) {
             return;
@@ -99,6 +101,41 @@ class SH_Validator_Installer
         }
     }
 
+    public static function sh_maybe_sync_legacy_cities()
+    {
+        if (get_option(self::OPTION_LEGACY_SYNC_DONE)) {
+            return;
+        }
+
+        $legacy_rows = self::sh_get_legacy_city_rows_from_database();
+
+        if (empty($legacy_rows)) {
+            return;
+        }
+
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . 'sh_validator_cities';
+
+        foreach ($legacy_rows as $row) {
+            if (empty($row['city_name']) || empty($row['postal_code'])) {
+                continue;
+            }
+
+            $wpdb->replace(
+                $table_name,
+                array(
+                    'city_name' => $row['city_name'],
+                    'postal_code' => $row['postal_code'],
+                    'normalized_name' => self::sh_normalize_city_name($row['city_name']),
+                ),
+                array('%s', '%s', '%s')
+            );
+        }
+
+        self::sh_mark_legacy_sync_if_possible();
+    }
+
     private static function sh_get_legacy_city_rows_from_database()
     {
         global $wpdb;
@@ -125,6 +162,24 @@ class SH_Validator_Installer
             },
             $rows
         );
+    }
+
+    private static function sh_get_current_city_count()
+    {
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . 'sh_validator_cities';
+
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_name}");
+    }
+
+    private static function sh_mark_legacy_sync_if_possible()
+    {
+        $legacy_rows = self::sh_get_legacy_city_rows_from_database();
+
+        if (!empty($legacy_rows)) {
+            update_option(self::OPTION_LEGACY_SYNC_DONE, 'yes');
+        }
     }
 
     private static function sh_get_fallback_city_rows()

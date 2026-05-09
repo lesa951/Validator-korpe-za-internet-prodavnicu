@@ -37,6 +37,7 @@ class SH_Validator_Checkout
             'label' => __('Grad', 'sh-validator-korpe'),
             'required' => true,
             'class' => array('form-row-wide', 'update_totals_on_change'),
+            'input_class' => array('sh-city-search', 'wc-enhanced-select'),
             'priority' => 70,
             'options' => $this->repository->sh_get_city_options(),
         );
@@ -52,6 +53,8 @@ class SH_Validator_Checkout
         $fields['billing']['billing_postcode']['label'] = __('Poštanski broj', 'sh-validator-korpe');
         $fields['billing']['billing_postcode']['required'] = true;
         $fields['billing']['billing_postcode']['priority'] = 71;
+        $fields['billing']['billing_postcode']['type'] = 'text';
+        $fields['billing']['billing_postcode']['placeholder'] = __('Generiše se automatski izborom grada', 'sh-validator-korpe');
         $fields['billing']['billing_postcode']['custom_attributes']['readonly'] = 'readonly';
 
         if (isset($fields['billing']['billing_phone'])) {

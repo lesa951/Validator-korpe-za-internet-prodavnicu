@@ -22,6 +22,15 @@ class SH_Validator_Repository
         return $wpdb->get_results("SELECT id, city_name, postal_code FROM {$table_name} ORDER BY city_name ASC", ARRAY_A);
     }
 
+    public function sh_get_city_count()
+    {
+        global $wpdb;
+
+        $table_name = $this->sh_get_table_name();
+
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_name}");
+    }
+
     public function sh_get_city_options()
     {
         $cities = $this->sh_get_cities();
