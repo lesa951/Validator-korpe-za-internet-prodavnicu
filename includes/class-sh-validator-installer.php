@@ -22,22 +22,83 @@ class SH_Validator_Installer
     public static function sh_get_default_email_typos()
     {
         return array(
-            'gmaik.com' => 'gmail.com',
-            'gmaik.rs' => 'gmail.com',
-            'gmai.com' => 'gmail.com',
-            'gmail.con' => 'gmail.com',
-            'gmal.com' => 'gmail.com',
-            'gmial.com' => 'gmail.com',
-            'gnail.com' => 'gmail.com',
-            'hotmai.com' => 'hotmail.com',
-            'hotmial.com' => 'hotmail.com',
-            'hotnail.com' => 'hotmail.com',
-            'icloud.con' => 'icloud.com',
-            'outllok.com' => 'outlook.com',
-            'outlok.com' => 'outlook.com',
-            'yaho.com' => 'yahoo.com',
-            'yhoo.com' => 'yahoo.com',
-        );
+    'gmai.com' => 'gmail.com',
+    'gmaik.com' => 'gmail.com',
+    'gmaik.rs' => 'gmail.com',
+    'gmail.con' => 'gmail.com',
+    'gmal.com' => 'gmail.com',
+    'gmial.com' => 'gmail.com',
+    'gnail.com' => 'gmail.com',
+    'g-mail.com' => 'gmail.com',
+    'g.mail.com' => 'gmail.com',
+    'gemail.com' => 'gmail.com',
+    'gimail.com' => 'gmail.com',
+    'gmaile.com' => 'gmail.com',
+    'gmaill.com' => 'gmail.com',
+    'gmaiol.com' => 'gmail.com',
+    'gmale.com' => 'gmail.com',
+    'gmall.com' => 'gmail.com',
+    'gmaol.com' => 'gmail.com',
+    'gmaul.com' => 'gmail.com',
+    'gmeil.com' => 'gmail.com',
+    'gmil.com' => 'gmail.com',
+    'gmmail.com' => 'gmail.com',
+    'gmsil.com' => 'gmail.com',
+    'gmail.co' => 'gmail.com',
+    'gmail.cm' => 'gmail.com',
+    'gmail.cmo' => 'gmail.com',
+    'gmail.comm' => 'gmail.com',
+    'gmail.om' => 'gmail.com',
+    'gmailcom' => 'gmail.com',
+    'gmail.rs' => 'gmail.com',
+    'hotmai.com' => 'hotmail.com',
+    'hotmial.com' => 'hotmail.com',
+    'hotnail.com' => 'hotmail.com',
+    'hormail.com' => 'hotmail.com',
+    'hotmail.con' => 'hotmail.com',
+    'hotmaill.com' => 'hotmail.com',
+    'hotmal.com' => 'hotmail.com',
+    'hotmale.com' => 'hotmail.com',
+    'hotmil.com' => 'hotmail.com',
+    'hotmail.co' => 'hotmail.com',
+    'hotmail.cm' => 'hotmail.com',
+    'hotmail.cmo' => 'hotmail.com',
+    'hotmail.comm' => 'hotmail.com',
+    'hotmai.rs' => 'hotmail.com',
+    'icloud.con' => 'icloud.com',
+    'iclaud.com' => 'icloud.com',
+    'icoud.com' => 'icloud.com',
+    'icloud.co' => 'icloud.com',
+    'icloud.cm' => 'icloud.com',
+    'icloud.cmo' => 'icloud.com',
+    'icloud.comm' => 'icloud.com',
+    'outllok.com' => 'outlook.com',
+    'outlok.com' => 'outlook.com',
+    'oulook.com' => 'outlook.com',
+    'outlook.con' => 'outlook.com',
+    'outlouk.com' => 'outlook.com',
+    'outlook.co' => 'outlook.com',
+    'outlook.cm' => 'outlook.com',
+    'outlook.cmo' => 'outlook.com',
+    'outlook.comm' => 'outlook.com',
+    'outllook.com' => 'outlook.com',
+    'outlook.rs' => 'outlook.com',
+    'yaho.com' => 'yahoo.com',
+    'yhoo.com' => 'yahoo.com',
+    'yahho.com' => 'yahoo.com',
+    'yaho.co' => 'yahoo.com',
+    'yahoo.cmo' => 'yahoo.com',
+    'yahoomail.com' => 'yahoo.com',
+    'yahu.com' => 'yahoo.com',
+    'yshoo.com' => 'yahoo.com',
+    'yahoo.co' => 'yahoo.com',
+    'yahoo.cm' => 'yahoo.com',
+    'yahoo.con' => 'yahoo.com',
+    'yahoo.comm' => 'yahoo.com',
+    'yahooo.com' => 'yahoo.com',
+    'ymail.con' => 'ymail.com',
+    'live.con' => 'live.com',
+);
     }
 
     private static function sh_create_cities_table()
@@ -76,11 +137,15 @@ class SH_Validator_Installer
 
     private static function sh_seed_email_typos()
     {
-        if (get_option(self::OPTION_EMAIL_TYPOS)) {
+        $default_typos = self::sh_get_default_email_typos();
+        $saved_typos = get_option(self::OPTION_EMAIL_TYPOS, array());
+
+        if (!is_array($saved_typos) || empty($saved_typos)) {
+            update_option(self::OPTION_EMAIL_TYPOS, $default_typos);
             return;
         }
 
-        update_option(self::OPTION_EMAIL_TYPOS, self::sh_get_default_email_typos());
+        update_option(self::OPTION_EMAIL_TYPOS, array_merge($default_typos, $saved_typos));
     }
 
     private static function sh_seed_cities_if_needed()
