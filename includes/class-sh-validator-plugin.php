@@ -108,7 +108,26 @@ class SH_Validator_Plugin
             $notice = __('Lista čestih email grešaka je sačuvana.', 'sh-validator-korpe');
         }
 
-        $cities = $this->repository->sh_get_cities();
+        if (isset($_POST['sh_bulk_action']) && $_POST['sh_bulk_action'] === 'delete') {
+            check_admin_referer('sh_bulk_cities');
+            $deleted_count = $this->repository->sh_delete_cities(isset($_POST['city_ids']) ? (array) $_POST['city_ids'] : array());
+            $notice = sprintf(
+                _n('%d grad je obrisan.', '%d gradova je obrisano.', $deleted_count, 'sh-validator-korpe'),
+                $deleted_count
+            );
+        }
+
+        $cities_per_page = 20;
+        $cities_search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+        $cities_current_page = isset($_GET['paged']) ? max(1, absint($_GET['paged'])) : 1;
+        $cities_total_items = $this->repository->sh_get_filtered_city_count($cities_search);
+        $cities_total_pages = max(1, (int) ceil($cities_total_items / $cities_per_page));
+
+        if ($cities_current_page > $cities_total_pages) {
+            $cities_current_page = $cities_total_pages;
+        }
+
+        $cities = $this->repository->sh_get_cities_page($cities_current_page, $cities_per_page, $cities_search);
         $email_typos = $this->settings->sh_get_email_typos_for_textarea();
 
         include SH_VALIDATOR_PATH . 'admin/views/settings-page.php';

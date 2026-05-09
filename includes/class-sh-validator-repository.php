@@ -22,6 +22,52 @@ class SH_Validator_Repository
         return $wpdb->get_results("SELECT id, city_name, postal_code FROM {$table_name} ORDER BY city_name ASC", ARRAY_A);
     }
 
+    public function sh_get_cities_page($page = 1, $per_page = 20, $search = '')
+    {
+        global $wpdb;
+
+        $table_name = $this->sh_get_table_name();
+        $page = max(1, (int) $page);
+        $per_page = max(1, (int) $per_page);
+        $offset = ($page - 1) * $per_page;
+        $where = '';
+        $params = array();
+
+        if ($search !== '') {
+            $like = '%' . $wpdb->esc_like($search) . '%';
+            $where = 'WHERE city_name LIKE %s OR postal_code LIKE %s';
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        $params[] = $per_page;
+        $params[] = $offset;
+        $query = "SELECT id, city_name, postal_code FROM {$table_name} {$where} ORDER BY city_name ASC, postal_code ASC LIMIT %d OFFSET %d";
+
+        return $wpdb->get_results($wpdb->prepare($query, $params), ARRAY_A);
+    }
+
+    public function sh_get_filtered_city_count($search = '')
+    {
+        global $wpdb;
+
+        $table_name = $this->sh_get_table_name();
+
+        if ($search === '') {
+            return $this->sh_get_city_count();
+        }
+
+        $like = '%' . $wpdb->esc_like($search) . '%';
+
+        return (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table_name} WHERE city_name LIKE %s OR postal_code LIKE %s",
+                $like,
+                $like
+            )
+        );
+    }
+
     public function sh_get_city_count()
     {
         global $wpdb;
@@ -130,6 +176,26 @@ class SH_Validator_Repository
         $table_name = $this->sh_get_table_name();
 
         return false !== $wpdb->delete($table_name, array('id' => (int) $city_id), array('%d'));
+    }
+
+    public function sh_delete_cities($city_ids)
+    {
+        global $wpdb;
+
+        if (!is_array($city_ids) || empty($city_ids)) {
+            return 0;
+        }
+
+        $city_ids = array_values(array_filter(array_map('absint', $city_ids)));
+
+        if (empty($city_ids)) {
+            return 0;
+        }
+
+        $table_name = $this->sh_get_table_name();
+        $placeholders = implode(',', array_fill(0, count($city_ids), '%d'));
+
+        return (int) $wpdb->query($wpdb->prepare("DELETE FROM {$table_name} WHERE id IN ({$placeholders})", $city_ids));
     }
 
     public function sh_delete_all_cities()

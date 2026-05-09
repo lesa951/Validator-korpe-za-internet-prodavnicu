@@ -28,3 +28,12 @@
 .sh-validator-admin .sh-validator-table-card {
     margin-top: 8px;
 }
+
+.sh-validator-admin .sh-validator-search-form .search-box {
+    float: none;
+    margin: 0 0 16px;
+}
+
+.sh-validator-admin .sh-validator-search-form input[type="search"] {
+    min-width: 280px;
+}

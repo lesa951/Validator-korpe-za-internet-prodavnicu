@@ -3,7 +3,7 @@
  * Plugin Name: Validator korpe za internet prodavnicu
  * Plugin URI: https://sasahuremovic.rs
  * Description: Dodatak za internet prodavnicu koji proverava i sređuje podatke kupca tokom procesa poručivanja.
- * Version: 1.2.5
+ * Version: 1.2.6
  * Author: Saša Huremović / Orbilix
  * Author URI: https://sasahuremovic.rs
  * Text Domain: sh-validator-korpe
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SH_VALIDATOR_VERSION', '1.2.5');
+define('SH_VALIDATOR_VERSION', '1.2.6');
 define('SH_VALIDATOR_FILE', __FILE__);
 define('SH_VALIDATOR_PATH', plugin_dir_path(__FILE__));
 define('SH_VALIDATOR_URL', plugin_dir_url(__FILE__));
