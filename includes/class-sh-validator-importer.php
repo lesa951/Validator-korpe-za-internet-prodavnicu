@@ -25,7 +25,24 @@ class SH_Validator_Importer
             return new WP_Error('invalid_file_type', __('Podržani formati su CSV, JSON, XML i XLSX.', 'sh-validator-korpe'));
         }
 
-        $rows = $this->sh_parse_file($uploaded_file['tmp_name'], $extension);
+        return $this->sh_import_from_file_path($uploaded_file['tmp_name'], $extension, $replace_existing);
+    }
+
+    public function sh_import_from_file_path($file_path, $extension = '', $replace_existing = false)
+    {
+        if (!is_string($file_path) || $file_path === '' || !file_exists($file_path) || !is_readable($file_path)) {
+            return new WP_Error('missing_file', __('Fajl za import nije pronađen ili nije čitljiv.', 'sh-validator-korpe'));
+        }
+
+        if ($extension === '') {
+            $extension = strtolower((string) pathinfo($file_path, PATHINFO_EXTENSION));
+        }
+
+        if (!in_array($extension, array('csv', 'json', 'xml', 'xlsx'), true)) {
+            return new WP_Error('invalid_file_type', __('Podržani formati su CSV, JSON, XML i XLSX.', 'sh-validator-korpe'));
+        }
+
+        $rows = $this->sh_parse_file($file_path, $extension);
 
         if (is_wp_error($rows)) {
             return $rows;

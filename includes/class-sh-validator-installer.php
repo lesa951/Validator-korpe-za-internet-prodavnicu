@@ -8,6 +8,7 @@ class SH_Validator_Installer
 {
     const OPTION_EMAIL_TYPOS = 'sh_validator_email_typos';
     const OPTION_LEGACY_SYNC_DONE = 'sh_validator_legacy_sync_done';
+    const BUNDLED_CITIES_FILE = 'data/gradovi.xlsx';
 
     public static function sh_install()
     {
@@ -69,14 +70,19 @@ class SH_Validator_Installer
 
     private static function sh_seed_cities_if_needed()
     {
-        global $wpdb;
-
-        $table_name = $wpdb->prefix . 'sh_validator_cities';
         $count = self::sh_get_current_city_count();
 
         if ($count > 0) {
             return;
         }
+
+        if (self::sh_seed_cities_from_bundled_file()) {
+            return;
+        }
+
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . 'sh_validator_cities';
 
         $legacy_rows = self::sh_get_legacy_city_rows_from_database();
 
@@ -99,6 +105,25 @@ class SH_Validator_Installer
                 array('%s', '%s', '%s')
             );
         }
+    }
+
+    private static function sh_seed_cities_from_bundled_file()
+    {
+        $bundled_file = SH_VALIDATOR_PATH . self::BUNDLED_CITIES_FILE;
+
+        if (!file_exists($bundled_file) || !is_readable($bundled_file)) {
+            return false;
+        }
+
+        $repository = new SH_Validator_Repository();
+        $importer = new SH_Validator_Importer($repository);
+        $result = $importer->sh_import_from_file_path($bundled_file, 'xlsx', true);
+
+        if (is_wp_error($result)) {
+            return false;
+        }
+
+        return ((int) $result['inserted'] + (int) $result['updated']) > 0;
     }
 
     public static function sh_maybe_sync_legacy_cities()
