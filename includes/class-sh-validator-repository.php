@@ -127,6 +127,76 @@ class SH_Validator_Repository
         return false !== $wpdb->delete($table_name, array('id' => (int) $city_id), array('%d'));
     }
 
+    public function sh_delete_all_cities()
+    {
+        global $wpdb;
+
+        $table_name = $this->sh_get_table_name();
+
+        return false !== $wpdb->query("TRUNCATE TABLE {$table_name}");
+    }
+
+    public function sh_import_city($city_name, $postal_code)
+    {
+        global $wpdb;
+
+        $city_name = sanitize_text_field($city_name);
+        $postal_code = sanitize_text_field($postal_code);
+        $normalized_name = SH_Validator_Installer::sh_normalize_city_name($city_name);
+
+        if ($city_name === '' || $postal_code === '') {
+            return new WP_Error('invalid_import_row', __('Grad i poštanski broj su obavezni za import.', 'sh-validator-korpe'));
+        }
+
+        if (!preg_match('/^[0-9]{4,6}$/', $postal_code)) {
+            return new WP_Error('invalid_import_postal_code', __('Poštanski broj mora imati 4 do 6 cifara.', 'sh-validator-korpe'));
+        }
+
+        $table_name = $this->sh_get_table_name();
+        $existing_id = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT id FROM {$table_name} WHERE normalized_name = %s LIMIT 1",
+                $normalized_name
+            )
+        );
+
+        if ($existing_id) {
+            $updated = $wpdb->update(
+                $table_name,
+                array(
+                    'city_name' => $city_name,
+                    'postal_code' => $postal_code,
+                    'normalized_name' => $normalized_name,
+                ),
+                array('id' => (int) $existing_id),
+                array('%s', '%s', '%s'),
+                array('%d')
+            );
+
+            if ($updated === false) {
+                return new WP_Error('import_update_failed', __('Red nije moguće ažurirati.', 'sh-validator-korpe'));
+            }
+
+            return 'updated';
+        }
+
+        $inserted = $wpdb->insert(
+            $table_name,
+            array(
+                'city_name' => $city_name,
+                'postal_code' => $postal_code,
+                'normalized_name' => $normalized_name,
+            ),
+            array('%s', '%s', '%s')
+        );
+
+        if ($inserted === false) {
+            return new WP_Error('import_insert_failed', __('Red nije moguće ubaciti.', 'sh-validator-korpe'));
+        }
+
+        return 'inserted';
+    }
+
     public function sh_find_postal_code_by_city($city_name)
     {
         global $wpdb;
